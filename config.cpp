@@ -2,10 +2,10 @@
 
 Json::Value defaultConfig(){
 	Json::Value v;
-	
+
 	v["filepath_completion_use_working_dir"] = false;
 	v["auto_trigger"] = true;
-	v["min_num_of_chars_for_completion"] = 2;
+	v["min_num_of_chars_for_completion"] = 1;
 	v["min_num_identifier_candidate_chars"] = 0;
 	v["semantic_triggers"] = Json::Value(Json::objectValue);
 
@@ -18,7 +18,7 @@ Json::Value defaultConfig(){
 	v["collect_identifiers_from_comments_and_strings"] = false;
 	v["collect_identifiers_from_tags_files"] = false;
 	v["extra_conf_globlist"] = Json::Value(Json::arrayValue);
-	v["global_ycm_extra_conf"] = "";
+	v["global_ycm_extra_conf"] = "/opt/ycmd/.ycm_extra_conf.py";
 	v["confirm_extra_conf"] = true;
 	v["complete_in_comments"] = false;
 	v["complete_in_strings"] = true;
@@ -48,7 +48,7 @@ Json::Value defaultConfig(){
 	v["use_ultisnips_completer"] = true;
 	v["csharp_server_port"] = 2000;
 	v["server_keep_logfiles"] = false;
-	v["ycmd_path"] = "";
+	v["ycmd_path"] = "/opt/ycmd/ycmd";
 
 	return v;
 }
