@@ -14,12 +14,12 @@ Prerequisites:
 - OpenSSL headers
 
 After installing those, then execute
-> cmake .
+`cmake .`
 After that, if everything went smoothly,
-> make
+`make`
 After it completes, it's (for now) necessary to put compiled gycm.so file using those commands:
-> sudo cp gycm.so /usr/lib64/geany/ (For openSUSE)
-> sudo ldconfig
+`sudo cp gycm.so /usr/lib64/geany/ (For openSUSE)
+sudo ldconfig`
 After those steps, GYCM should be available in Geany's Plugin Manager
 
 See Also
