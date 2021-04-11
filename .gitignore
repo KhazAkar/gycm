@@ -1,3 +1,11 @@
 build/*
 *.pyc
 *.swp
+ARGS/
+CMakeFiles/*
+compile_commands.json
+gycm.geany
+gycm.so
+CMakeCache.txt
+Makefile
+cmake_install.cmake
