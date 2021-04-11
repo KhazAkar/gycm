@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.1)
+cmake_minimum_required (VERSION 3.10)
 
 project(GYCM)
 
@@ -50,7 +50,7 @@ if(MSVC)
         endif()
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER MATCHES "clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O2 --std=c++11 -Wno-ignored-attributes -Wno-missing-field-initializers")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -std=c99 -O2 -Wno-ignored-attributes -Wno-missing-field-initializers") 
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -std=c99 -O2 -Wno-ignored-attributes -Wno-missing-field-initializers")
         string(REGEX REPLACE " -g " " -ggdb " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 else()
         message("Probably shouldn't be here; what compiler are you using?")
