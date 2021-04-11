@@ -12,24 +12,31 @@
 #include <unistd.h>
 #include <glib/gstdio.h>
 #include "config.hpp"
+#include <iostream>
 
 #define SSM(s, m, w, l) scintilla_send_message(s, m, w, l)
-
 Ycmd::Ycmd(GeanyData* _gd, GeanyFunctions* _gf) : geany(_gd), geany_functions(_gf), running(false) {
+	try {
 	// Generate HMAC secret
 	for(size_t i=0; i<HMAC_SECRET_LENGTH; i++)
 		hmac[i] = (char) (rand() % 256);
-	
+
 	if(ne_sock_init() != 0){
 		msgwin_status_add("Neon initialization failed! This is very bad.");
 	}
 }
+catch(...){throw;}
+}
 
 Ycmd::~Ycmd(){
+	try {
 	ne_sock_exit();
+}
+catch(...){throw;}
 }
 
 bool Ycmd::startServer(){
+	try {
 	if(running)
 		return true;
 	pid = 0;
@@ -68,16 +75,15 @@ bool Ycmd::startServer(){
 		f.close();
 	}
 	gchar* hmac64 = g_base64_encode((guchar*) hmac,HMAC_SECRET_LENGTH);
-	//printf("HMAC Secret: %s\n",hmac64);
 	ycmdsettings["hmac_secret"] = std::string(hmac64);
 	g_free(hmac64);
-	
+
 	const gchar* _tmpdir = g_get_tmp_dir();
 	std::string tempdir(_tmpdir);
 	gchar* tmpfname = g_build_filename(tempdir.c_str(),"ycmdXXXXXX",NULL);
-	
+
 	std::string jsonout = Json::FastWriter().write(ycmdsettings);
-	
+
 	int fd = mkstemp(tmpfname);
 	if(fd == -1){
 		msgwin_status_add("ycmd startup failed: Could not write config: %s (mkstemp)", strerror(errno));
@@ -92,17 +98,17 @@ bool Ycmd::startServer(){
 		msgwin_status_add("ycmd startup failed: Could not write config: %s (fwrite)", strerror(errno));
 		return false;
 	}
-	
-	
-	
+
+
+
 	port = getFreePort();
 	if(port == -1){
 		msgwin_status_add("ycmd startup failed: Could not get free port: %s", strerror(errno));
 		return false;
 	}
-	
+
 	gchar* cwd = g_get_current_dir();
-	gchar py[] = "python";
+	gchar py[] = "python3";
 	gchar iss[] = "--idle_suicide_seconds=10800";
 	gchar * args[6] = { py, NULL, NULL, NULL, iss, NULL }; /* python; ycmd path; port, config; iss */ // TODO: Add log-level option
 	// ycmd path
@@ -114,26 +120,26 @@ bool Ycmd::startServer(){
 	}
 	args[1] = g_build_filename(expanded_path,"ycmd",NULL);
 	free(expanded_path);
-	
+
 	// Port:
 	std::stringstream _port; _port << "--port=" << port;
 	args[2] = new char[_port.str().length()];
 	strcpy(args[2],_port.str().c_str());
-	
+
 	// Options
 	std::string optf = "--options_file=" + std::string(tmpfname);
 	args[3] = new char[optf.length()];
 	strcpy(args[3],optf.c_str());
-	
+
 	GError * err = NULL;
 	bool ret = g_spawn_async_with_pipes(cwd,args,NULL,G_SPAWN_SEARCH_PATH,NULL,NULL,&pid,NULL,&ycmd_stdout_fd, &ycmd_stderr_fd,&err);
-	
+
 	fclose(temp);
 	delete[] args[2];
 	delete[] args[3];
 	free(cwd);
 	g_free(args[1]);
-	
+
 	if(!ret){
 		g_assert(err != NULL);
 		msgwin_status_add("ycmd startup failed: %s", err->message);
@@ -147,17 +153,23 @@ bool Ycmd::startServer(){
 		msgwin_status_add("ycmd startup failed: ycmd server has gone AWOL!");
 		return false;
 	}
-	
+
 	http = ne_session_create("http", "127.0.0.1", port);
 	running = true;
 	return true;
 }
+catch(...){throw;}
+}
 
 bool Ycmd::isAlive(){
-	return pid != 0 && kill(pid,0) == 0;
+	try {
+		return pid != 0 && kill(pid,0) == 0;
+	}
+	catch(...){throw;}
 }
 
 void Ycmd::shutdown(){
+	try {
 	if(!running)
 		return;
 	msgwin_status_add("Shutting down ycmd");
@@ -166,16 +178,22 @@ void Ycmd::shutdown(){
 	ne_session_destroy(http);
 	if(kill(pid,SIGTERM) != 0)
 		msgwin_status_add("ycmd vanished! [%s]", strerror(errno));
+	}
+	catch(...){throw;}
 }
 
 void Ycmd::jsonRequestBuild(GeanyDocument * _g, Json::Value& request, Json::Value& extra_data){
+	try {
 	jsonRequestBuild(_g,request);
 	Json::Value::Members x = extra_data.getMemberNames();
 	for(auto it = x.begin(); it != x.end(); it++)
 		request[*it] = extra_data[*it];
+	}
+	catch(...){throw;}
 }
 
 void Ycmd::jsonRequestBuild(GeanyDocument * _g, Json::Value& request){
+	try {
 	ScintillaObject * sci = _g->editor->sci;
 	std::string fpath = _g->real_path?std::string(_g->real_path):"";
 	//Json::Value request;
@@ -186,16 +204,22 @@ void Ycmd::jsonRequestBuild(GeanyDocument * _g, Json::Value& request){
 	//gchar * document = sci_get_contents(sci,sci_get_length(sci));
 	//request["file_data"][fpath]["contents"] = std::string(document);
 	request["file_data"] = getUnsavedBuffers(_g);
-	
+
 	currentEditor = sci;
-	
+
 	//std::cout << "Built request: " << Json::StyledWriter().write(request); // Debug! :D
 }
+catch(...){throw;}
+}
 int block_reader(void * userdata, const char * buf, size_t len){
-	return ((Ycmd*)userdata)->handler(buf,len);
+	try {
+		return ((Ycmd*)userdata)->handler(buf,len);
+	}
+	catch(...){throw;}
 }
 
 int Ycmd::handler(const char * buf, size_t len){ // TODO: Validate HMAC
+	try {
 	if(len != 0){
 		size_t start = returned_data.size();
 		returned_data.resize(start + len);
@@ -203,26 +227,26 @@ int Ycmd::handler(const char * buf, size_t len){ // TODO: Validate HMAC
 		return 0;
 	}
 	// We have a complete set of data
-	
+
 	//for(size_t i=0; i<returned_data.size(); i++){
 	//	printf("%c",returned_data[i]);
 	//}
 	//printf("\n\n");
-	
+
 	//std::cout << "Handling response: " << returned_data;
-	
+
 	Json::Value returned;
 	if(!doc.parse(returned_data,returned)){
 		msgwin_status_add("Bad JSON from ycmd: %s", doc.getFormattedErrorMessages().c_str());
 		returned_data = "";
 		return 0;
 	}
-	
+
 	returned_data = "";
-	
+
 	if(returned.isNull()) // Some things just return an empty document; this is of no use to us
 		return 0;
-	
+
 	if(returned.isMember("exception")){
 		msgwin_status_add("[ycmd] %s: %s", returned["exception"]["TYPE"].asCString(), returned["message"].asCString());
 		#ifndef NDEBUG
@@ -230,9 +254,9 @@ int Ycmd::handler(const char * buf, size_t len){ // TODO: Validate HMAC
 		#endif
 		return 0;
 	}
-	
+
 	//std::cout << returned.toStyledString();
-	
+
 	// Handle completions
 	if(returned.isMember("completion_start_column")){
 		Json::Value * v;
@@ -256,22 +280,25 @@ int Ycmd::handler(const char * buf, size_t len){ // TODO: Validate HMAC
 			SSM(currentEditor,SCI_AUTOCCANCEL,0,0); // Cancel any current completions
 		}
 	}
-			
-	
+
+
 	return 0; // Success! // was 0
+}
+catch(...){throw;}
 }
 
 #define HMAC_LENGTH (256/8)
 void Ycmd::send(Json::Value& _json, std::string _handler){
+	try {
 	if(!assertServer()) return; // A good idea?
         std::string method("POST");
         ne_request* req = ne_request_create(http,method.c_str(),_handler.c_str());
 	ne_add_request_header(req,"content-type","application/json");
-	
+
 	currentMessage = _json;
-	
+
 	std::string json = Json::FastWriter().write(_json);
-	
+
         unsigned char join[HMAC_LENGTH*3];
         HMAC(EVP_sha256(), hmac, HMAC_SECRET_LENGTH,(unsigned char *) method.c_str(),method.length(), join, NULL);
         HMAC(EVP_sha256(), hmac, HMAC_SECRET_LENGTH,(unsigned char *) _handler.c_str(),_handler.length(), join+HMAC_LENGTH, NULL);
@@ -291,30 +318,39 @@ void Ycmd::send(Json::Value& _json, std::string _handler){
 		msgwin_status_add("HTTP request error: %s",ne_get_error(http));
 	}
 }
+catch(...){throw;}
+}
 
 bool Ycmd::assertServer(){
+	try {
 	if(isAlive())
 		return true;
 	return restart();
 }
+	catch(...){throw;}
+}
 
 bool Ycmd::restart(){
+	try {
 	shutdown();
 	return startServer();
 }
+catch(...){throw;}
+}
 
 Json::Value Ycmd::getUnsavedBuffers(GeanyDocument* doc){
+	try{
 	guint i;
 	Json::Value v;
 	gchar * document;
 	ScintillaObject * sci;
 	std::string fpath;
-	
+
 	foreach_document(i){
 		if(!documents[i]->changed && documents[i] != doc)
 			continue;
 		fpath = documents[i]->real_path?std::string(documents[i]->real_path):"";
-		
+
 		sci = documents[i]->editor->sci;
 		v[fpath]["filetypes"][0] = strToLower(documents[i]->file_type->name);
 		document = sci_get_contents(sci,sci_get_length(sci));
@@ -325,8 +361,11 @@ Json::Value Ycmd::getUnsavedBuffers(GeanyDocument* doc){
 		v = Json::Value(Json::objectValue);
 	return v;
 }
+catch(...){throw;}
+}
 
 void Ycmd::handleDocumentLoad(GObject*, GeanyDocument* doc){
+	try {
 	SSM(doc->editor->sci,SCI_AUTOCSETORDER,SC_ORDER_CUSTOM,0);
 	Json::Value json;
 	Json::Value extrad;
@@ -334,8 +373,11 @@ void Ycmd::handleDocumentLoad(GObject*, GeanyDocument* doc){
 	jsonRequestBuild(doc,json,extrad);
 	send(json,EVENT_HANDLER);
 }
+catch(...){throw;}
+}
 
 void Ycmd::handleDocumentUnload(GObject*, GeanyDocument* doc){
+	try {
 	Json::Value json;
 	Json::Value extrad;
 	extrad["event_name"] = "BufferUnload";
@@ -344,8 +386,11 @@ void Ycmd::handleDocumentUnload(GObject*, GeanyDocument* doc){
 	jsonRequestBuild(doc,json,extrad);
 	send(json,EVENT_HANDLER);
 }
+catch(...){throw;}
+}
 
 void Ycmd::handleDocumentVisit(GObject*, GeanyDocument* doc){
+	try {
 	if(!doc)
 		return;
 	Json::Value json;
@@ -354,11 +399,16 @@ void Ycmd::handleDocumentVisit(GObject*, GeanyDocument* doc){
 	jsonRequestBuild(doc,json,extrad);
 	send(json,EVENT_HANDLER);
 }
+catch(...){throw;}
+}
 
 void Ycmd::complete(GObject*,GeanyDocument* doc){
+	try {
 	if(sci_get_length(doc->editor->sci) == 0) return; // Empty document, move along
-	
+
 	Json::Value json;
 	jsonRequestBuild(doc,json); // Basic request is all we need, I think
 	send(json,CODE_COMPLETIONS_HANDLER);
+}
+catch(...){throw;}
 }

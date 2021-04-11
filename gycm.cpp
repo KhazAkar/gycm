@@ -10,7 +10,6 @@ PLUGIN_VERSION_CHECK(217); /* May be overly high */
 PLUGIN_SET_INFO("GYCM", "YouCompleteMe smart code completion for Geany", "0.1", "Jake Bott <jake.anq\100gmail.com>");
 
 Ycmd * y;
-
 extern "C" void handle_document_load(GObject *obj, GeanyDocument *doc, gpointer user_data){
 	((Ycmd*)user_data)->handleDocumentLoad(obj,doc);
 }
