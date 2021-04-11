@@ -32,6 +32,6 @@ After those steps, GYCM should be available in Geany's Plugin Manager
 See Also
 --------
 
-- [ycmd-core website](https://github.com/ycm-core/ycmd) - core server for YouCompleteMe - YCMD
-- [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) - The original plugin for vim
-- [Original GYCM plugin creator](https://github.com/jakeanq/gycm)
+- [ycmd-core website](https://github.com/ycm-core/ycmd) - Core server for YouCompleteMe - YCMD
+- [YouCompleteMe](https://github.com/ycm-core/YouCompleteMe) - The original plugin for vim
+- [GYCM](https://github.com/jakeanq/gycm) - Original GYCM plugin creator
